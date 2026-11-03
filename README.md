@@ -55,7 +55,7 @@ homepage = "https://github.com/acme/packs/tree/main/example"
 [requires]
 dive = ">=0.17"
 os = ["macos", "linux"]
-binaries = ["bash", "jq", "wc", "file", "head"]
+binaries = ["bash", "jq", "wc", "head", "tr", "grep"]
 env = ["EXAMPLE_TOKEN"]
 
 [requires.mcp.linear]

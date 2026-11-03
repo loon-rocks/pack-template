@@ -7,4 +7,4 @@ homepage = "https://github.com/loon-rocks/pack-template/tree/main/example"
 [requires]
 dive = ">=0.17"
 os = ["macos", "linux"]
-binaries = ["bash", "jq", "wc", "file", "head"]
+binaries = ["bash", "jq", "wc", "head", "tr", "grep"]

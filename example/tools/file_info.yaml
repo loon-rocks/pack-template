@@ -1,7 +1,8 @@
 version: 2
 name: file_info
 description: >
-  Size, line and word counts, MIME type, and the first 4 KB of a file on
+  Size, line and word counts, MIME type (from the extension, or text versus
+  binary when the extension is unknown), and the first 4 KB of a file on
   disk. Use before summarizing or classifying a file.
 kind: exec
 command: bash
@@ -11,9 +12,36 @@ args:
   - |
     f=$1
     read -r lines words bytes _ < <(wc -lwc -- "$f")
+    ext=$(printf '%s' "${f##*/}" | tr '[:upper:]' '[:lower:]')
+    case "$ext" in
+      *.md|*.markdown) mime=text/markdown ;;
+      *.txt|*.log) mime=text/plain ;;
+      *.csv) mime=text/csv ;;
+      *.html|*.htm) mime=text/html ;;
+      *.json) mime=application/json ;;
+      *.yaml|*.yml) mime=application/yaml ;;
+      *.toml) mime=application/toml ;;
+      *.xml) mime=application/xml ;;
+      *.sh) mime=text/x-shellscript ;;
+      *.py) mime=text/x-python ;;
+      *.rs) mime=text/x-rust ;;
+      *.js|*.mjs) mime=text/javascript ;;
+      *.ts) mime=text/x-typescript ;;
+      *.pdf) mime=application/pdf ;;
+      *.png) mime=image/png ;;
+      *.jpg|*.jpeg) mime=image/jpeg ;;
+      *.gif) mime=image/gif ;;
+      *.webp) mime=image/webp ;;
+      *.svg) mime=image/svg+xml ;;
+      *.zip) mime=application/zip ;;
+      *.gz|*.tgz) mime=application/gzip ;;
+      *)
+        if [ ! -s "$f" ] || grep -Iq . -- "$f"; then mime=text/plain; else mime=application/octet-stream; fi
+        ;;
+    esac
     jq -n \
       --arg path "$f" \
-      --arg mime "$(file -b --mime-type -- "$f")" \
+      --arg mime "$mime" \
       --argjson lines "$lines" --argjson words "$words" --argjson bytes "$bytes" \
       --rawfile excerpt <(head -c 4096 -- "$f") \
       '{path: $path, mime: $mime, lines: $lines, words: $words, bytes: $bytes, excerpt: $excerpt}'

@@ -16,4 +16,4 @@ dive pack add github.com/<owner>/<repo> --path example
 
 ## Requirements
 
-`bash`, `jq`, `wc`, `file` and `head` on `PATH`, on macOS or Linux.
+`bash`, `jq`, `wc`, `head`, `tr` and `grep` on `PATH`, on macOS or Linux.
