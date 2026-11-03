@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    container: ghcr.io/loon-rocks/dive:v0.17.0
+    container: ghcr.io/loon-rocks/dive:v0.18.0
     steps:
       - uses: actions/checkout@v4
       - run: apt-get update && apt-get install -y --no-install-recommends file
