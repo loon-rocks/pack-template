@@ -101,7 +101,7 @@ Every major release ships a migration plan, `plans/migrations/migrate_v<N>.yaml`
 
 The plan's output is `{applied, files}`, each file `{path, changed, applied, diff}`. A pack that ships no migration plan for a major gets its `MIGRATING.md` printed instead.
 
-The user's files call the pack by its installed name, which the migration reads as `{{pack.name}}`. `example/plans/migrations/migrate_v2.yaml` is the pattern: a scan tool finds files that mention the old names, a `map` asks `builtin__infer` to rewrite each one under exact rules, and a write tool returns the diff and writes only when `apply` is true. Running it twice changes nothing the second time.
+The user's files call the pack by its installed name, which the migration reads as `{{pack.name}}`. `example/plans/migrations/migrate_v2.yaml` is the pattern: a scan tool finds files that mention the old names, and a `map` runs a write tool over each one that applies the renames, returns the diff, and writes only when `apply` is true. The rewrite is plain `awk`, so the migration needs no model and runs the same in CI as on a laptop. Running it twice changes nothing the second time.
 
 Files under `plans/migrations/` and `tools/migrations/` never join the catalog. Only `dive pack update --major` loads them: no plan, agent, planner, tool search or CLI command can call them. A migration plan calls its own tools and the pack's other items with `$pack`, like any pack file. The upgrade command finds a migration by its directory and its `migrate_v<N>` identifier.
 
