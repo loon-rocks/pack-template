@@ -2,7 +2,7 @@
 
 ## v2.0.0
 
-Breaking. See MIGRATING.md; `graph pack update --major` runs the migration.
+Breaking. See MIGRATING.md; `dive pack update --major` runs the migration.
 
 - `tool__file_stats` is renamed `tool__file_info`.
 - The `path` input of `tool__file_info` and `plan__describe_file` is renamed `file`.

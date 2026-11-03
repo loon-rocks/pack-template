@@ -11,7 +11,7 @@ Describe files on disk: stats, an excerpt, and a one-paragraph summary.
 ## Install
 
 ```bash
-graph pack add github.com/<owner>/<repo> --path example
+dive pack add github.com/<owner>/<repo> --path example
 ```
 
 ## Requirements
