@@ -1,7 +1,7 @@
 version: 2
 name: migrate_v2_scan
 description: >
-  Finds the plan, agent and tool files under a graph directory that call this
+  Finds the plan, agent and tool files under a Dive directory that call this
   pack's v1 names, and returns each one's path and content. Used by
   plan__migrate_v2.
 kind: exec

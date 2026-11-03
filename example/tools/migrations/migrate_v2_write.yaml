@@ -1,35 +1,75 @@
 version: 2
 name: migrate_v2_write
 description: >
-  Returns the unified diff between a file and its migrated content, and
-  writes the migrated content when apply is true. Used by plan__migrate_v2.
+  Rewrites one file from this pack's v1 names and inputs to v2, returns the
+  unified diff, and writes the result when apply is true. Used by
+  plan__migrate_v2.
 kind: exec
 command: bash
 args:
   - "-ceuo"
   - "pipefail"
   - |
-    path=$1 content=$2 apply=$3
-    content=${content%$'\n'}
-    diff=$(diff -u --label "$path" --label "$path (v2)" -- "$path" <(printf '%s\n' "$content") || true)
+    path=$1 pack=$2 apply=$3
+    migrated=$(awk -v pack="$pack" '
+      function indent(s) { match(s, /^ */); return RLENGTH }
+      function blank(s) { return s ~ /^[ \t]*(#.*)?$/ }
+      {
+        gsub(pack "__tool__file_stats", pack "__tool__file_info")
+        line[NR] = $0
+      }
+      END {
+        target = "^[\"\x27]?(" pack "__tool__file_info|" pack "__plan__describe_file)[\"\x27]?[ \t]*$"
+        for (i = 1; i <= NR; i++) {
+          if (line[i] !~ /^ *- +id:/) continue
+          s = indent(line[i]); k = s + 2
+          e = NR
+          for (j = i + 1; j <= NR; j++) if (!blank(line[j]) && indent(line[j]) <= s) { e = j - 1; break }
+          calls = 0; in_at = 0
+          for (j = i + 1; j <= e; j++) {
+            if (indent(line[j]) != k) continue
+            if (line[j] ~ /^ *tool_name:/) {
+              v = line[j]; sub(/^ *tool_name: */, "", v)
+              if (v ~ target) calls = 1
+            }
+            if (line[j] ~ /^ *input:/) in_at = j
+          }
+          if (!calls || !in_at) continue
+          if (line[in_at] ~ /^ *input: *\{/) {
+            gsub(/\{ *path:/, "{ file:", line[in_at])
+            gsub(/, *path:/, ", file:", line[in_at])
+            continue
+          }
+          c = -1
+          for (j = in_at + 1; j <= e; j++) {
+            if (blank(line[j])) continue
+            if (indent(line[j]) <= k) break
+            if (c < 0) c = indent(line[j])
+            if (indent(line[j]) == c && line[j] ~ /^ *path:/) sub(/path:/, "file:", line[j])
+          }
+        }
+        for (i = 1; i <= NR; i++) print line[i]
+      }
+    ' "$path")
+    diff=$(diff -u --label "$path" --label "$path (v2)" -- "$path" <(printf '%s\n' "$migrated") || true)
     if [ "$apply" = true ] && [ -n "$diff" ]; then
-      printf '%s\n' "$content" > "$path"
+      printf '%s\n' "$migrated" > "$path"
     fi
     jq -n --arg path "$path" --arg diff "$diff" --argjson apply "$apply" \
       '{path: $path, changed: ($diff != ""), applied: ($apply and $diff != ""), diff: $diff}'
   - migrate_v2_write
   - "{{input.path}}"
-  - "{{input.content}}"
+  - "{{input.pack}}"
   - "{{input.apply}}"
 output: json
 timeout_secs: 10
 input_schema:
   type: object
-  required: [path, content, apply]
+  required: [path, pack, apply]
   properties:
-    path:    { type: string, description: Absolute path of the file to migrate }
-    content: { type: string, description: The file's full migrated content }
-    apply:   { type: boolean, description: Write the file; false only returns the diff }
+    path:  { type: string, description: Absolute path of the file to migrate }
+    pack:  { type: string, description: The name the pack is installed under }
+    apply: { type: boolean, description: Write the file; false only returns the diff }
 output_schema:
   type: object
   properties:
